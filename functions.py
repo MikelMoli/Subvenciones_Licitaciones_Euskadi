@@ -20,116 +20,167 @@ class WebDataExtraction:
 
     def get_driver(self):
         options = options = Options()
-        options.add_argument("--headless")
+        if not DEBUG:
+            options.add_argument("--headless")
         driver = webdriver.Firefox(executable_path='./geckodriver-v0.31.0-linux64/geckodriver', options=options)
         return driver
 
-    def get_top_box_information(self):
-        main_top_information_splitted = self.driver.find_element(By.CLASS_NAME, 'r01gInfoAdicional').text
-        return main_top_information_splitted
+
+    def get_line_stripped_data(self):
+        all_texts = self.driver.find_elements(By.CLASS_NAME, 'r01SeccionTexto')
+        empresa_licitadora = '-'
+        datos_adjudicacion = '-'
+        for text_element in all_texts:
+            text = text_element.text
+            if 'CIF/NIF' in text:
+                empresa_licitadora = text
+            elif 'Precio sin IVA' in text:
+                datos_adjudicacion = text
+                break
+
+        return empresa_licitadora, datos_adjudicacion
+
+    def get_existing_item(self, id, url):
+        item = {}
+        item["ID"] = id
+        item["Resumen Adjudicación"] = self.driver.find_element(By.CLASS_NAME, 'bgInfoAdicional').text
+
+        item["Num. licitadores presentados"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[1]/div[2]').text
+        item["Ofertas realizadas por PYMEs"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[2]/div[2]').text
+        item["Ofertas de países Union Europea"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[3]/div[2]').text
+        item["Ofertas terceros paises"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[4]/div[2]').text
+        item["Ofertas electronicas"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[5]/div[2]').text
+
+
+        empresa_licitadora, datos_adjudicacion = self.get_line_stripped_data()
+        
+        item["Empresas Licitadoras"] = empresa_licitadora
+        item["Datos de Adjudicación"] = datos_adjudicacion
+        item["URL"] = url
+
+        self.driver.find_element(By.ID, 'aorganismos').click() # Select Organismos tab
+        try:
+            item["Poder Adjudicador"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[2]/div[2]/p').text
+        except:
+            item["Poder Adjudicador"] = '-'
+        try:
+            item["Ámbito"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[3]/div[2]').text
+        except:
+            item["Ámbito"] = '-'
+        try:
+            item["Entidad Impulsora"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[4]/div[2]/p').text
+        except:
+            item["Entidad Impulsora"] = '-'
+        try:
+            item["Órgano de Contratación"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[5]/div[2]').text
+        except:
+            item["Órgano de Contratación"] = '-'
+        try:
+            item["Entidad Tramitadora"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[6]/div[2]/p').text
+        except:
+            item["Entidad Tramitadora"] = '-'
+        try:
+            item["Mesa de contratación"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[7]/div[2]').text
+        except:
+            item["Mesa de contratación"] = '-'
+        try:
+            item["Tipo de poder"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[8]/div[2]').text
+        except:
+            item["Tipo de poder"] = '-'
+        try:
+            item["Otro tipo de poder"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[9]/div[2]').text
+        except:
+            item["Otro tipo de poder"] = '-'
+        try:
+            item["Actividad Principal"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[10]/div[2]').text
+        except:
+            item["Actividad Principal"] = '-'
+        try:
+            item["Otra Actividad Principal"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[11]/div[2]').text
+        except:
+            item["Otra Actividad Principal"] = '-'
+        try:
+            item["El contrato es adjudicado por una central de compras"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[13]/div[2]').text
+        except:
+            item["El contrato es adjudicado por una central de compras"] = '-'
+        try:
+            item["Obtención de documentación e información"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[14]/div[2]').text
+        except:
+            item["Obtención de documentación e información"] = '-'
+        try:
+            item["Órgano de recurso"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[15]/div[2]').text
+        except:
+            item["Órgano de recurso"] = '-'
+        try:
+            item["Servicio de información sobre recursos"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[16]/div[2]').text
+        except:
+            item["Servicio de información sobre recursos"] = '-'
+  
+        return item
 
     def create_empty_register(self):
-        # Creates empty register taking into account all the 
-        pass
+        item  = {
+            "ID": "-",
+            "Poder Adjudicador": "-",
+            "Ámbito": "-",
+            "Entidad Impulsora": "-",
+            "Órgano de Contratación": "-",
+            "Entidad Tramitadora": "-",
+            "Mesa de contratación": "-",
+            "Tipo de poder": "-",
+            "Otro tipo de poder": "-",
+            "Actividad Principal": "-",
+            "Otra Actividad Principal": "-",
+            "El contrato es adjudicado por una central de compras": "-",
+            "Obtención de documentación e información": "-",
+            "Órgano de recurso": "-",
+            "Servicio de información sobre recursos": "-",
+            "Resumen Adjudicación": "-",
+            "Num. licitadores presentados": "-",
+            "Ofertas realizadas por PYMEs": "-",
+            "Ofertas de países Union Europea": "-",
+            "Ofertas terceros paises": "-",
+            "Ofertas electronicas": "-",
+            "Empresas Licitadoras": "-",
+            "Datos de Adjudicación": "-",
+            "URL": "-"
+        }
+        return item
 
-    def scrape_web_data(self, url, driver):
+    def scrape_web_data(self, id, url):
         self.driver.get(url)
         r = requests.get(url) 
         if r.status_code == 200:
-            top_box_information = self.get_top_box_information(driver)
-
-            text_data = driver.find_elements(By.CLASS_NAME, 'r01SeccionTexto')
-
-            texts_to_strip = [x.text for x in text_data if 'Razón social' in x.text]
-            licitation_companies = texts_to_strip[0]
-            adjudication_data= texts_to_strip[1]
-
-            driver.find_element(By.ID, 'aorganismos').click() # Select Organismos tab
-
-            # adjudication_information_box = driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[8]/div[2]/p').text # Check and correct
-
-            number_of_bidders = driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[1]/div[2]').text
-            offers_from_pymes = driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[2]/div[2]').text
-            offers_from_ue_countries = driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[3]/div[2]').text
-            offers_from_third_countries = driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[4]/div[2]').text
-            electronic_offers = driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[5]/div[2]').text
-            # adjudication_date = driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[4]/div[7]/div[2]').text # Check and correct, date in top box
-
-            adjudication_item = {'Datos de Adjudicación': adjudication_data}
-            adjudication_item['Resumen Adjudicación'] =  top_box_information
-            adjudication_item['Empresas Licitadoras'] = licitation_companies
-            adjudication_item['Num. licitadores presentados'] = number_of_bidders
-            adjudication_item['Ofertas realizadas por PYMEs'] = offers_from_pymes
-            adjudication_item['Ofertas de países Union Europea'] = offers_from_ue_countries
-            adjudication_item['Ofertas terceros paises'] = offers_from_third_countries
-            adjudication_item['Ofertas electronicas'] = electronic_offers
-            # adjudication_item['Fecha adjudicacion'] = [adjudication_date]
-
-
-            # elif r.status_code == 404:
-            #     print(f'EMPTY BECAUSE 404 {url}')
-            #     adjudication_item = {
-            #                             'Fecha inicio plazo': '-',
-            #                             'Plazo': '-',
-            #                             'Razón social': '-',
-            #                             'Precio sin IVA': '-',
-            #                             'Precio con IVA': '-', 
-            #                             'Es probable que el contrato sea objeto de subcontratación': '-', 
-            #                             'Num. licitadores presentados': '-', 
-            #                             'Ofertas realizadas por PYMEs': '-', 
-            #                             'Ofertas de países Union Europea': '-', 
-            #                             'Ofertas terceros paises': '-', 
-            #                             'Ofertas electronicas': '-', 
-            #                             'Fecha adjudicacion': '-'
-            #                         }
-
-            
-
-            return adjudication_item
-    
+            adjudication_item = self.get_existing_item(id, url)    
         else:
-            self.create_empty_register()
+            adjudication_item = self.create_empty_register()
+
+        return adjudication_item
 
 if __name__ == "__main__":
+    scraper = WebDataExtraction()
     json_file_data = []
-    data = pd.read_csv('./data/full_data.csv').loc[0:10]
+    data = pd.read_csv('./data/full_data.csv').loc[0:100]
     web_data = pd.DataFrame()
-    driver = get_driver()
     if not DEBUG:
         total = data.shape[0]
         for i, row in data.iterrows():
-            print(f'{i}/{total-1}')
+            if i % 10 == 0:
+                print(f'{i}/{total-1}')
             url = row['urlEs']
-            print(url)
+            id = row['id']
+            # print(url)
             try:
-                item = scrape_web_data(url, driver)
+                item = scraper.scrape_web_data(id, url)
             except Exception:
                 print(url)
                 traceback.print_exc()
-                empty_item = {'Fecha inicio plazo': '-',
-                            'Plazo': '-',
-                            'Razón social': '-',
-                            'Precio sin IVA': '-',
-                            'Precio con IVA': '-', 
-                            'Es probable que el contrato sea objeto de subcontratación': '-', 
-                            'Num. licitadores presentados': '-', 
-                            'Ofertas realizadas por PYMEs': '-', 
-                            'Ofertas de países Union Europea': '-', 
-                            'Ofertas terceros paises': '-', 
-                            'Ofertas electronicas': '-', 
-                            'Fecha adjudicacion': '-'
-                            }
-                item = empty_item
+                item = scraper.create_empty_register()
 
             item['url'] = url
             json_file_data.append(item)
-        driver.close()    
-        with open(filename, 'w', encoding='utf-8') as json_file:
+        scraper.driver.close()    
+        with open(scraper.filename, 'w', encoding='utf-8') as json_file:
             json.dump(json_file_data, json_file, 
                                 indent=4,  
                                 separators=(',',': '), ensure_ascii=False)
-            # web_data = pd.concat([web_data, item], axis=0)
-
-        # web_data.to_csv('./data/scrapped_data.csv', index=False)
-    
-    # driver.close()

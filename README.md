@@ -43,9 +43,9 @@ Cada registro  de la webs tendrá los siguientes campos:
 
 # Plan de ejecución
 
-1. Realizar extracción de datos funcional para muestras muy pequeñas (10 registros) [ - ]
+1. Realizar extracción de datos funcional para muestras muy pequeñas (10 registros) [ X ]
 
-2. Realizar extracción de datos funcional para muestras pequeñas (100 registros) [ - ]
+2. Realizar extracción de datos funcional para muestras pequeñas (100 registros) [ x ]
 
 3. Añadir paralelización al scraping para acelerar la extracción completa [ - ]
 
