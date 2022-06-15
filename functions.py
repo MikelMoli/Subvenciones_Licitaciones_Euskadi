@@ -1,3 +1,5 @@
+from ast import arg
+import chunk
 from inspect import trace
 from selenium import webdriver
 from webdriver_manager.firefox import GeckoDriverManager
@@ -8,15 +10,19 @@ import json
 import pandas as pd
 import traceback
 from selenium.webdriver.common.by import By
-
+from multiprocessing import Pool, Value, Array
+import time
+import numpy as np
+from tqdm import tqdm
 DEBUG = False
 
+FILENAME = './raw_data/licitacion_data_{}.json'
 
 class WebDataExtraction:
 
     def __init__(self):
         self.driver = self.get_driver()
-        self.filename = './data/licitacion_data.json'
+
 
     def get_driver(self):
         options = options = Options()
@@ -115,10 +121,12 @@ class WebDataExtraction:
             item["Servicio de información sobre recursos"] = self.driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/div[7]/div[1]/div[16]/div[2]').text
         except:
             item["Servicio de información sobre recursos"] = '-'
-  
+
+        item["Code"] = "200"
+
         return item
 
-    def create_empty_register(self):
+    def create_empty_register(self, text):
         item  = {
             "ID": "-",
             "Poder Adjudicador": "-",
@@ -143,7 +151,8 @@ class WebDataExtraction:
             "Ofertas electronicas": "-",
             "Empresas Licitadoras": "-",
             "Datos de Adjudicación": "-",
-            "URL": "-"
+            "URL": "-",
+            "Code": text
         }
         return item
 
@@ -153,34 +162,58 @@ class WebDataExtraction:
         if r.status_code == 200:
             adjudication_item = self.get_existing_item(id, url)    
         else:
-            adjudication_item = self.create_empty_register()
-
+            adjudication_item = self.create_empty_register("404")
+        
         return adjudication_item
 
-if __name__ == "__main__":
-    scraper = WebDataExtraction()
+
+
+def scrape_data_or_fail(data):
+    max_index = str(data.index.values.max())
+    chunk_bounds = str(data.index.values.min()) + '_' + max_index
     json_file_data = []
+    scraper = WebDataExtraction()
+    total = data.shape[0]
+    for i, row in data.iterrows():
+        if i % 10 == 0:
+            print(f'{i}/{max_index}', flush=True)
+        url = row['urlEs']
+        id = row['id']
+
+        try:
+            item = scraper.scrape_web_data(id, url)
+        except Exception:
+            print(url, flush=True)
+            traceback.print_exc()
+            item = scraper.create_empty_register('Exception')
+        json_file_data.append(item)
+        
+    with open(FILENAME.format(chunk_bounds), 'w', encoding='utf-8') as json_file:
+        json.dump(json_file_data, json_file, 
+                  indent=4,  
+                  separators=(',',': '), ensure_ascii=False)
+    
+    scraper.driver.close()  
+
+
+if __name__ == "__main__":
+    st = time.time()
+
+    # json_file_data = []
     data = pd.read_csv('./data/full_data.csv').loc[0:100]
     web_data = pd.DataFrame()
+    
     if not DEBUG:
+        p = Pool(processes=8)
         total = data.shape[0]
-        for i, row in data.iterrows():
-            if i % 10 == 0:
-                print(f'{i}/{total-1}')
-            url = row['urlEs']
-            id = row['id']
-            # print(url)
-            try:
-                item = scraper.scrape_web_data(id, url)
-            except Exception:
-                print(url)
-                traceback.print_exc()
-                item = scraper.create_empty_register()
+        chunk_list = [x.copy() for x in np.array_split(data, 5)]
+        print(f'Data splitted into {len(chunk_list)} parts')
+        result = p.map(scrape_data_or_fail, chunk_list)
+        p.terminate()
+        p.join()
+        # result.wait()
+        print('EXECUTION_TIME:', time.time() - st)
 
-            item['url'] = url
-            json_file_data.append(item)
-        scraper.driver.close()    
-        with open(scraper.filename, 'w', encoding='utf-8') as json_file:
-            json.dump(json_file_data, json_file, 
-                                indent=4,  
-                                separators=(',',': '), ensure_ascii=False)
+    # Execution time 100 registers no multiprocessing --> 159.23
+    # Execution time 100 registers 4 processors --> 100.65
+    # Execution time 100 registers 8 processors --> 53.86
