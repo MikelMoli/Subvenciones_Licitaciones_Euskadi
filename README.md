@@ -47,11 +47,16 @@ Cada registro  de la webs tendrá los siguientes campos:
 
 2. Realizar extracción de datos funcional para muestras pequeñas (100 registros) [ x ]
 
-3. Añadir paralelización al scraping para acelerar la extracción completa [ - ]
+3. Añadir paralelización al scraping para acelerar la extracción completa [ X ]
 
 4. Gestionar la extracción de manera resiliente y robusta. Para ello:
     
-    - Guardar ficheros cada pocos registros (aprox. 10).
-    - Si falla el scraping de esos datos se reintentará hasta 3 veces. 
+    - [X] Guardar ficheros cada pocos registros (aprox. 10).
+    - [] Si falla el scraping de esos datos se reintentará hasta 3 veces. 
     - En caso de que falle más de 3 veces los registros correspondientes a ese batch se guardarán. De esta manera se podrá realizar su extracción más tarde de manera independiente.
 
+
+
+# TODO:
+
+- [] Añadir robustez a la transformación de datos, si no encuentra algo, debería de añadir un registro vacío. IMPORTANTE COMPROBAR QUE DE VERDAD ESTÁ VACÍO.

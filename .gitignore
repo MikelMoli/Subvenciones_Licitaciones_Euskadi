@@ -3,3 +3,6 @@ venv/*
 geckodriver-v0.31.0-linux64.tar.gz
 explore.ipynb
 data/raw_data/*
+__pycache__/*
+dict_sample.csv
+data/scrapped_data_sample.csv

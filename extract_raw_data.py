@@ -10,13 +10,14 @@ import json
 import pandas as pd
 import traceback
 from selenium.webdriver.common.by import By
-from multiprocessing import Pool, Value, Array
+from multiprocessing import Pool
 import time
 import numpy as np
 from tqdm import tqdm
+import os
 DEBUG = False
 
-FILENAME = './raw_data/licitacion_data_{}.json'
+FILENAME = './data/raw_data/licitacion_data_{}.json'
 
 class WebDataExtraction:
 
@@ -197,10 +198,17 @@ def scrape_data_or_fail(data):
 
 
 if __name__ == "__main__":
+    executed_chunks = os.listdir('./data/raw_data/')
+    if len(executed_chunks) == 0:
+        last_chunk = 0
+    else:
+        executed_chunks = [int(x.split('_')[-1].split('.')[0]) for x in executed_chunks]
+        last_chunk = executed_chunks.max()
     st = time.time()
 
     # json_file_data = []
-    data = pd.read_csv('./data/full_data.csv').loc[0:100]
+    # data = pd.read_csv('./data/full_data.csv').loc[last_chunk:]
+    data = pd.read_csv('./data/full_data.csv').loc[:100]
     web_data = pd.DataFrame()
     
     if not DEBUG:
